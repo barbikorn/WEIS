@@ -57,7 +57,7 @@ def get_all_timer_data():
 
 # INCREASE?DECREASE TIME 
 ##########
-@router.get("/{timer_id}/increaseTime", response_model=Timer)
+@router.post("/{timer_id}/increaseTime", response_model=Timer)
 def increase_time(timer_id: str):
     timer = collection.find_one({"_id": ObjectId(timer_id)})
 
@@ -70,7 +70,7 @@ def increase_time(timer_id: str):
         raise HTTPException(status_code=404, detail="Timer not found")
 
 
-@router.get("/{timer_id}/decreaseTime", response_model=Timer)
+@router.post("/{timer_id}/decreaseTime", response_model=Timer)
 def decrease_time(timer_id: str):
     timer = collection.find_one({"_id": ObjectId(timer_id)})
 
