@@ -17,14 +17,16 @@ password="korn134Gcp"
 # atlas_uri = "mongodb+srv://korngcp:{password}@cluster0.2u6ezly.mongodb.net/?retryWrites=true&w=majority"
 # Mongo Ocean cluster
 atlas_uri = "mongodb+srv://doadmin:AU97Jfe026gE415o@db-mongodb-kornxecobz-8ade0110.mongo.ondigitalocean.com/admin?tls=true&authSource=admin"
-collection = get_database_atlas("oemPlat", atlas_uri)
-if collection is None:
-    # Handle the error condition here
-    print("Error: Unable to access the collection due to connection issues.")
-else:
-    # Perform operations on the collection
-    # ...
-    print("collection", collection)
+collection = get_database_atlas("oemPlat", atlas_uri)[collection_name]
+
+print("collection", collection)
+# if collection is None:
+#     # Handle the error condition here
+#     print("Error: Unable to access the collection due to connection issues.")
+# else:
+#     # Perform operations on the collection
+#     # ...
+#     print("collection", collection)
 
 
 class AsyncIterator:
@@ -67,6 +69,7 @@ def increase_time(timer_id: str):
     else:
         raise HTTPException(status_code=404, detail="Timer not found")
 
+
 @router.get("/{timer_id}/decreaseTime", response_model=Timer)
 def decrease_time(timer_id: str):
     timer = collection.find_one({"_id": ObjectId(timer_id)})
@@ -78,8 +81,6 @@ def decrease_time(timer_id: str):
         return timer
     else:
         raise HTTPException(status_code=404, detail="Timer not found")
-
-
 # MockWebSocketResponse.return_value = AsyncIterator(range(5))
 
 
