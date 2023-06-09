@@ -17,8 +17,14 @@ password="korn134Gcp"
 # atlas_uri = "mongodb+srv://korngcp:{password}@cluster0.2u6ezly.mongodb.net/?retryWrites=true&w=majority"
 # Mongo Ocean cluster
 atlas_uri = "mongodb+srv://doadmin:AU97Jfe026gE415o@db-mongodb-kornxecobz-8ade0110.mongo.ondigitalocean.com/admin?tls=true&authSource=admin"
-collection = get_database_atlas("oemPlat", atlas_uri)[collection_name]
-print("collection", collection)
+collection = get_database_atlas("oemPlat", atlas_uri)
+if collection is None:
+    # Handle the error condition here
+    print("Error: Unable to access the collection due to connection issues.")
+else:
+    # Perform operations on the collection
+    # ...
+    print("collection", collection)
 
 
 class AsyncIterator:
@@ -49,7 +55,7 @@ def get_all_timer_data():
 
 # INCREASE?DECREASE TIME 
 ##########
-@router.post("/{timer_id}/increaseTime", response_model=Timer)
+@router.get("/{timer_id}/increaseTime", response_model=Timer)
 def increase_time(timer_id: str):
     timer = collection.find_one({"_id": ObjectId(timer_id)})
 
@@ -61,7 +67,7 @@ def increase_time(timer_id: str):
     else:
         raise HTTPException(status_code=404, detail="Timer not found")
 
-@router.post("/{timer_id}/decreaseTime", response_model=Timer)
+@router.get("/{timer_id}/decreaseTime", response_model=Timer)
 def decrease_time(timer_id: str):
     timer = collection.find_one({"_id": ObjectId(timer_id)})
 
@@ -84,12 +90,14 @@ def decrease_time(timer_id: str):
 def create_timer(timer_data: Timer):
     timer_data_dict = timer_data.dict()
     result = collection.insert_one(timer_data_dict)
-    
+
     if result.acknowledged:
-        created_timer = collection.find_one({"_id": ObjectId(result.inserted_id)})
+        created_timer_id = str(result.inserted_id)
+        created_timer = {"id": created_timer_id, "time": timer_data_dict["time"]}
         return Timer(**created_timer)
     else:
         raise HTTPException(status_code=500, detail="Failed to create timer")
+
 
 @router.get("/", response_model=List[Timer])
 def get_all_timers():
