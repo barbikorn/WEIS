@@ -93,9 +93,6 @@ def delete_amphur(
     request: Request,
     amphur_id: str,
 ):
-    # host = htoken
-    # collection = database_manager.get_collection(host)
-
     result = collection.delete_one({"_id": ObjectId(amphur_id)})  # Convert amphur_id to ObjectId
     if result.deleted_count == 1:
         return {"message": "Amphur deleted successfully"}
