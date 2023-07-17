@@ -2,11 +2,11 @@
 import json
 import os
 from fastapi import APIRouter, HTTPException, Request, Header
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
 from bson import ObjectId
-from app.models.emission_factors.emission_factor import Emission_factor
+from app.models.emission_factors.emission_factor import EmissionFactor,EmissionFactorUpdate
 from app.database import get_database_atlas
-from app.models.hosts.route import HostDatabaseManager
+
 
 router = APIRouter()
 
@@ -14,50 +14,53 @@ atlas_uri = "mongodb+srv://doadmin:93CXS054W26pEjL1@db-weis-8d1328f2.mongo.ondig
 collection_name = "emission_factors"
 collection = get_database_atlas("WEIS", atlas_uri)[collection_name]
 
-database_manager = HostDatabaseManager(atlas_uri, collection_name)
 
-@router.post("/", response_model=Emission_factor)
+
+@router.post("/", response_model=EmissionFactor)
 def create_emission_factor(
     request: Request,
-    emission_factor_data: Emission_factor,
+    emission_factor_data: EmissionFactor,
 ):
     emission_factor_data_dict = emission_factor_data.dict()
     result = collection.insert_one(emission_factor_data_dict)
 
     if result.acknowledged:
         created_emission_factor = collection.find_one({"_id": ObjectId(result.inserted_id)})
-        return Emission_factor(**created_emission_factor)
+        return EmissionFactor(**created_emission_factor)
     else:
         raise HTTPException(status_code=500, detail="Failed to create emission_factor")
 
-@router.get("/", response_model=List[Emission_factor])
+@router.get("/", response_model=List[Dict[str, Any]])
 def get_all_emission_factors(
     request: Request,
 ):
     emission_factors = []
     for emission_factor in collection.find():
-        emission_factors.append(Emission_factor(**emission_factor))
+        id = str(emission_factor.pop('_id'))
+        emission_factor["id"] = id
+        print("id : ",id)
+        emission_factors.append(emission_factor)
     return emission_factors
 
-@router.get("/{emission_factor_id}", response_model=Emission_factor)
+
+@router.get("/{emission_factor_id}", response_model=EmissionFactor)
 def get_emission_factor(
     request: Request,
     emission_factor_id: str,
 ):
-
     emission_factor = collection.find_one({"_id": ObjectId(emission_factor_id)})
     if emission_factor:
-        return Emission_factor(**emission_factor)
+        return EmissionFactor(**emission_factor)
     else:
-        raise HTTPException(status_code=404, detail="Emission_factor not found")
+        raise HTTPException(status_code=404, detail="EmissionFactor not found")
 
-@router.get("/filters/", response_model=List[Emission_factor])
-async def get_emission_factor_by_filter(
-    request: Request,
+@router.post("/filters/", response_model=List[EmissionFactor])
+def get_emission_factor_by_filter(
+    request: EmissionFactorUpdate,
     offset: int = 0,
     limit: int = 100
-) -> List[Emission_factor]:
-    filter_params = await request.json()
+) -> List[EmissionFactor]:
+    filter_params = request.dict(exclude_unset=True)
     query = {}
 
     for field, value in filter_params.items():
@@ -65,24 +68,24 @@ async def get_emission_factor_by_filter(
 
     cursor = collection.find(query).skip(offset).limit(limit)
     emission_factors = []
-    async for emission_factor in cursor:
-        emission_factors.append(Emission_factor(id=str(emission_factor["_id"]), **emission_factor))
+    for emission_factor in cursor:
+        emission_factors.append(EmissionFactor(id=str(emission_factor["_id"]), **emission_factor))
 
     return emission_factors
 
 
-@router.put("/{emission_factor_id}", response_model=Emission_factor)
+@router.put("/{emission_factor_id}", response_model=EmissionFactor)
 async def update_emission_factor(
-    request: Request,
+    request: EmissionFactorUpdate,
     emission_factor_id: str,
 ):
-    updated_field = await request.json()
+    updated_field = request.dict(exclude_unset=True)
     result = collection.update_one({"_id": ObjectId(emission_factor_id)}, {"$set": updated_field})
     if result.modified_count == 1:
         updated_emission_factor = collection.find_one({"_id": ObjectId(emission_factor_id)})
-        return Emission_factor(**updated_emission_factor)
+        return EmissionFactor(**updated_emission_factor)
     else:
-        raise HTTPException(status_code=404, detail="Emission_factor not found")
+        raise HTTPException(status_code=404, detail="EmissionFactor not found")
 
 
 @router.delete("/{emission_factor_id}")
@@ -90,8 +93,8 @@ def delete_emission_factor(
     request: Request,
     emission_factor_id: str,
 ):
-    result = collection.delete_one({"_id": emission_factor_id})
+    result = collection.delete_one({"_id": ObjectId(emission_factor_id)})
     if result.deleted_count == 1:
-        return {"message": "Emission_factor deleted successfully"}
+        return {"message": "EmissionFactor deleted successfully"}
     else:
-        raise HTTPException(status_code=404, detail="Emission_factor not found")
+        raise HTTPException(status_code=404, detail="EmissionFactor not found")

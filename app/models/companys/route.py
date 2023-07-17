@@ -4,16 +4,16 @@ import os
 from fastapi import APIRouter, HTTPException, Request, Header
 from typing import List, Optional, Dict, Any
 from bson import ObjectId
-from app.models.companys.company import Company
+from app.models.companys.company import Company,CompanyUpdate
 from app.database import get_database_atlas
-from app.models.hosts.route import HostDatabaseManager
+
 
 router = APIRouter()
 
 atlas_uri = "mongodb+srv://doadmin:93CXS054W26pEjL1@db-weis-8d1328f2.mongo.ondigitalocean.com/admin?authSource=admin&tls=true"
 collection_name = "companys"
 
-database_manager = HostDatabaseManager(atlas_uri, collection_name)
+
 collection = get_database_atlas("WEIS", atlas_uri)[collection_name]
 
 @router.post("/", response_model=Company)
@@ -53,31 +53,13 @@ def get_company(
     else:
         raise HTTPException(status_code=404, detail="Company not found")
 
-@router.get("/filters/", response_model=List[Company])
-async def get_company_by_filter(
-    request: Request,
+@router.post("/filters/", response_model=List[Company])
+def get_company_by_filter(
+    request: CompanyUpdate,
     offset: int = 0,
     limit: int = 100
 ) -> List[Company]:
-    filter_params = await request.json()
-    query = {}
-    for field, value in filter_params.items():
-        query[field] = value
-
-    cursor = collection.find(query).skip(offset).limit(limit)
-    companies = []
-    async for company in cursor:
-        companies.append(Company(id=str(company["_id"]), **company))
-
-    return companies
-
-@router.get("/filters/", response_model=List[Company])
-async def get_company_by_filter(
-    request: Request,
-    offset: int = 0,
-    limit: int = 100
-) -> List[Company]:
-    filter_params = await request.json()
+    filter_params = request.dict(exclude_unset=True)
     query = {}
 
     for field, value in filter_params.items():
@@ -85,7 +67,7 @@ async def get_company_by_filter(
 
     cursor = collection.find(query).skip(offset).limit(limit)
     companys = []
-    async for company in cursor:
+    for company in cursor:
         companys.append(Company(id=str(company["_id"]), **company))
 
     return companys
@@ -93,7 +75,7 @@ async def get_company_by_filter(
 
 @router.put("/{company_id}", response_model=Company)
 async def update_company(
-    request: Request,
+    request: CompanyUpdate,
     company_id: str,
 ):
     updated_field = await request.json()

@@ -9,4 +9,9 @@ class Amphur(BaseModel):
     Geo_id: int
     Province_id :int
 
+class AmphurUpdate(BaseModel):
+    Amphur_code: Optional[str]
+    Amphur_name: Optional[str]
+    Geo_id: Optional[int]
+    Province_id :Optional[int]
     

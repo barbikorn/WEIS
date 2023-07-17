@@ -4,16 +4,16 @@ import os
 from fastapi import APIRouter, HTTPException, Request, Header
 from typing import List, Optional, Dict, Any
 from bson import ObjectId
-from app.models.post_likes.post_like import PostLike
+from app.models.post_likes.post_like import PostLike, PostLikeUpdate
 from app.database import get_database_atlas
-from app.models.hosts.route import HostDatabaseManager
+
 
 router = APIRouter()
 
 atlas_uri = "mongodb+srv://doadmin:AU97Jfe026gE415o@db-mongodb-kornxecobz-8ade0110.mongo.ondigitalocean.com/admin?tls=true&authSource=admin"
 collection_name = "post_likes"
 
-database_manager = HostDatabaseManager(atlas_uri, collection_name)
+
 collection = get_database_atlas("WEIS", atlas_uri)[collection_name]
 
 @router.post("/", response_model=PostLike)
@@ -54,31 +54,31 @@ def get_post_like(
     else:
         raise HTTPException(status_code=404, detail="Post_like not found")
 
-@router.get("/filters/", response_model=List[PostLike])
-async def get_post_like_by_filter(
-    request: Request,
+@router.post("/filters/", response_model=List[PostLike])
+def get_amphur_by_filter(
+    request: PostLikeUpdate,
     offset: int = 0,
     limit: int = 100
 ) -> List[PostLike]:
-    filter_params = await request.json()
+    filter_params = request.dict(exclude_unset=True)
     query = {}
 
     for field, value in filter_params.items():
         query[field] = value
 
     cursor = collection.find(query).skip(offset).limit(limit)
-    companies = []
-    async for post_like in cursor:
-        companies.append(PostLike(id=str(post_like["_id"]), **post_like))
+    amphurs = []
+    for amphur in cursor:
+        amphurs.append(PostLike(id=str(amphur["_id"]), **amphur))
 
-    return companies
+    return amphurs
 
 @router.put("/{post_like_id}", response_model=PostLike)
-async def update_post_like(
-    request: Request,
+def update_post_like(
+    request: PostLikeUpdate,
     post_like_id: str,
 ):
-    updated_field = await request.json()
+    updated_field = request.dict(exclude_unset=True)
     result = collection.update_one({"_id": ObjectId(post_like_id)}, {"$set": updated_field})
     if result.modified_count == 1:
         updated_post_like = collection.find_one({"_id": ObjectId(post_like_id)})

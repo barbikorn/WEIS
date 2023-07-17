@@ -4,16 +4,16 @@ import os
 from fastapi import APIRouter, HTTPException, Request, Header
 from typing import List, Optional, Dict, Any
 from bson import ObjectId
-from app.models.posts.post import Post
+from app.models.posts.post import Post, PostUpdate
 from app.database import get_database_atlas
-from app.models.hosts.route import HostDatabaseManager
+
 
 router = APIRouter()
 
 atlas_uri = "mongodb+srv://doadmin:AU97Jfe026gE415o@db-mongodb-kornxecobz-8ade0110.mongo.ondigitalocean.com/admin?tls=true&authSource=admin"
 collection_name = "posts"
 
-database_manager = HostDatabaseManager(atlas_uri, collection_name)
+
 collection = get_database_atlas("WEIS", atlas_uri)[collection_name]
 
 @router.post("/", response_model=Post)
@@ -54,13 +54,13 @@ def get_post(
     else:
         raise HTTPException(status_code=404, detail="Post not found")
 
-@router.get("/filters/", response_model=List[Post])
-async def get_post_by_filter(
-    request: Request,
+@router.post("/filters/", response_model=List[Post])
+def get_post_by_filter(
+    request: PostUpdate,
     offset: int = 0,
     limit: int = 100
 ) -> List[Post]:
-    filter_params = await request.json()
+    filter_params = request.dict(exclude_unset=True)
     query = {}
 
     for field, value in filter_params.items():
@@ -68,17 +68,17 @@ async def get_post_by_filter(
 
     cursor = collection.find(query).skip(offset).limit(limit)
     posts = []
-    async for post in cursor:
+    for post in cursor:
         posts.append(Post(id=str(post["_id"]), **post))
 
     return posts
 
 @router.put("/{post_id}", response_model=Post)
-async def update_post(
-    request: Request,
+def update_post(
+    request: PostUpdate,
     post_id: str,
 ):
-    updated_field = await request.json()
+    updated_field = request.dict(exclude_unset=True)
     result = collection.update_one({"_id": ObjectId(post_id)}, {"$set": updated_field})
     if result.modified_count == 1:
         updated_post = collection.find_one({"_id": ObjectId(post_id)})

@@ -6,14 +6,14 @@ from typing import List, Optional, Dict, Any
 from bson import ObjectId
 from app.models.members.member import Member
 from app.database import get_database_atlas
-from app.models.hosts.route import HostDatabaseManager
+
 
 router = APIRouter()
 
 atlas_uri = "mongodb+srv://doadmin:AU97Jfe026gE415o@db-mongodb-kornxecobz-8ade0110.mongo.ondigitalocean.com/admin?tls=true&authSource=admin"
 collection_name = "members"
 
-database_manager = HostDatabaseManager(atlas_uri, collection_name)
+
 collection = get_database_atlas("WEIS", atlas_uri)[collection_name]
 
 @router.post("/", response_model=Member)
@@ -55,17 +55,16 @@ def get_member(
     else:
         raise HTTPException(status_code=404, detail="Member not found")
 
-@router.get("/filters/", response_model=List[Member])
+@router.post("/filters/", response_model=List[Member])
 async def get_members_by_filter(
     request: Request,
     name: Optional[str] = None,
     email: Optional[str] = None,
     offset: int = 0,
     limit: int = 100,
-    htoken: Optional[str] = Header(None)
+
 ):
-    host = htoken
-    collection = database_manager.get_collection(host)
+
 
     query = {}
     if name:
@@ -82,10 +81,9 @@ async def get_members_by_filter(
 def get_members_by_filter(
     request: Request,
     filter: Dict,
-    htoken: Optional[str] = Header(None)
+
 ):
-    host = htoken
-    collection = database_manager.get_collection(host)
+
 
     members = []
     for member in collection.find(filter):
@@ -100,10 +98,9 @@ def update_member(
     request: Request,
     member_id: str,
     member_data,
-    htoken: Optional[str] = Header(None)
+
 ):
-    host = htoken
-    collection = database_manager.get_collection(host)
+
 
     result = collection.update_one({"_id": member_id}, {"$set": member_data.dict()})
     if result.modified_count == 1:
@@ -116,10 +113,9 @@ def update_member(
 def delete_member(
     request: Request,
     member_id: str,
-    htoken: Optional[str] = Header(None)
+
 ):
-    host = htoken
-    collection = database_manager.get_collection(host)
+
 
     result = collection.delete_one({"_id": member_id})
     if result.deleted_count == 1:

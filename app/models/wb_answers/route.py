@@ -4,16 +4,16 @@ import os
 from fastapi import APIRouter, HTTPException, Request, Header
 from typing import List, Optional, Dict, Any
 from bson import ObjectId
-from app.models.wb_answers.wb_answer import WbAnswer
+from app.models.wb_answers.wb_answer import WbAnswer, WbAnswerUpdate
 from app.database import get_database_atlas
-from app.models.hosts.route import HostDatabaseManager
+
 
 router = APIRouter()
 
 atlas_uri = "mongodb+srv://doadmin:AU97Jfe026gE415o@db-mongodb-kornxecobz-8ade0110.mongo.ondigitalocean.com/admin?tls=true&authSource=admin"
 collection_name = "wb_answers"
 
-database_manager = HostDatabaseManager(atlas_uri, collection_name)
+
 collection = get_database_atlas("WEIS", atlas_uri)[collection_name]
 
 @router.post("/", response_model=WbAnswer)
@@ -54,31 +54,31 @@ def get_wb_answer(
     else:
         raise HTTPException(status_code=404, detail="Wb_answer not found")
 
-@router.get("/filters/", response_model=List[WbAnswer])
-async def get_wb_answer_by_filter(
-    request: Request,
+@router.post("/filters/", response_model=List[WbAnswer])
+def get_amphur_by_filter(
+    request: WbAnswerUpdate,
     offset: int = 0,
     limit: int = 100
 ) -> List[WbAnswer]:
-    filter_params = await request.json()
+    filter_params = request.dict(exclude_unset=True)
     query = {}
 
     for field, value in filter_params.items():
         query[field] = value
 
     cursor = collection.find(query).skip(offset).limit(limit)
-    wb_questions = []
-    async for wb_answer in cursor:
-        wb_questions.append(WbAnswer(id=str(wb_answer["_id"]), **wb_answer))
+    amphurs = []
+    for amphur in cursor:
+        amphurs.append(WbAnswer(id=str(amphur["_id"]), **amphur))
 
-    return wb_questions
+    return amphurs
 
 @router.put("/{wb_answer_id}", response_model=WbAnswer)
 async def update_wb_answer(
-    request: Request,
+    request: WbAnswerUpdate,
     wb_answer_id: str,
 ):
-    updated_field = await request.json()
+    updated_field = request.dict(exclude_unset=True)
     result = collection.update_one({"_id": ObjectId(wb_answer_id)}, {"$set": updated_field})
     if result.modified_count == 1:
         updated_wb_answer = collection.find_one({"_id": ObjectId(wb_answer_id)})

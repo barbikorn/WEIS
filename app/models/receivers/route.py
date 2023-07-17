@@ -6,14 +6,14 @@ from typing import List, Optional, Dict, Any
 from bson import ObjectId
 from app.models.receivers.receiver import Receiver
 from app.database import get_database_atlas
-from app.models.hosts.route import HostDatabaseManager
+
 
 router = APIRouter()
 
 atlas_uri = "mongodb+srv://doadmin:AU97Jfe026gE415o@db-mongodb-kornxecobz-8ade0110.mongo.ondigitalocean.com/admin?tls=true&authSource=admin"
 collection_name = "receivers"
 
-# database_manager = HostDatabaseManager(atlas_uri, collection_name)
+# 
 collection = get_database_atlas("WEIS", atlas_uri)[collection_name]
 
 @router.post("/", response_model=Receiver)
@@ -62,34 +62,11 @@ def get_receiver(
     else:
         raise HTTPException(status_code=404, detail="Receiver not found")
 
-@router.get("/filters/", response_model=List[Receiver])
-async def get_receivers_by_filter(
-    request: Request,
-    name: Optional[str] = None,
-    email: Optional[str] = None,
-    offset: int = 0,
-    limit: int = 100,
-    htoken: Optional[str] = Header(None)
-):
-    # host = htoken
-    # collection = database_manager.get_collection(host)
-
-    query = {}
-    if name:
-        query["name"] = name
-    if email:
-        query["email"] = email
-
-    receivers = []
-    for receiver in collection.find(query).skip(offset).limit(limit):
-        receivers.append(Receiver(id=str(receiver["_id"]), **receiver))
-    return receivers
-
 @router.get("/filter", response_model=List[Receiver])
 def get_receivers_by_filter(
     request: Request,
     filter: Dict,
-    htoken: Optional[str] = Header(None)
+
 ):
     # host = htoken
     # collection = database_manager.get_collection(host)
@@ -104,11 +81,8 @@ def update_receiver(
     request: Request,
     receiver_id: str,
     receiver_data,
-    htoken: Optional[str] = Header(None)
-):
-    # host = htoken
-    # collection = database_manager.get_collection(host)
 
+):
     result = collection.update_one({"_id": receiver_id}, {"$set": receiver_data.dict()})
     if result.modified_count == 1:
         updated_receiver = collection.find_one({"_id": receiver_id})

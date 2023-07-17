@@ -4,16 +4,16 @@ import os
 from fastapi import APIRouter, HTTPException, Request, Header
 from typing import List, Optional, Dict, Any
 from bson import ObjectId
-from app.models.wb_questions.wb_question import WbQuestion
+from app.models.wb_questions.wb_question import WbQuestion, WbQuestionUpdate
 from app.database import get_database_atlas
-from app.models.hosts.route import HostDatabaseManager
+
 
 router = APIRouter()
 
 atlas_uri = "mongodb+srv://doadmin:AU97Jfe026gE415o@db-mongodb-kornxecobz-8ade0110.mongo.ondigitalocean.com/admin?tls=true&authSource=admin"
 collection_name = "wb_questions"
 
-database_manager = HostDatabaseManager(atlas_uri, collection_name)
+
 collection = get_database_atlas("WEIS", atlas_uri)[collection_name]
 
 @router.post("/", response_model=WbQuestion)
@@ -54,24 +54,24 @@ def get_wb_question(
     else:
         raise HTTPException(status_code=404, detail="Wb_question not found")
 
-@router.get("/filters/", response_model=List[WbQuestion])
-async def get_wb_question_by_filter(
-    request: Request,
+@router.post("/filters/", response_model=List[WbQuestion])
+def get_wb_question_by_filter(
+    request: WbQuestionUpdate,
     offset: int = 0,
     limit: int = 100
 ) -> List[WbQuestion]:
-    filter_params = await request.json()
+    filter_params = request.dict(exclude_unset=True)
     query = {}
 
     for field, value in filter_params.items():
         query[field] = value
 
     cursor = collection.find(query).skip(offset).limit(limit)
-    companies = []
-    async for wb_question in cursor:
-        companies.append(WbQuestion(id=str(wb_question["_id"]), **wb_question))
+    wb_questions = []
+    for wb_question in cursor:
+        wb_questions.append(WbQuestion(id=str(wb_question["_id"]), **wb_question))
 
-    return companies
+    return wb_questions
 
 @router.get("/filter", response_model=List[WbQuestion])
 def get_wb_questions_by_filter(
@@ -87,11 +87,11 @@ def get_wb_questions_by_filter(
     return wb_questions
 
 @router.put("/{wb_question_id}", response_model=WbQuestion)
-async def update_wb_question(
-    request: Request,
+def update_wb_question(
+    request: WbQuestionUpdate,
     wb_question_id: str,
 ):
-    updated_field = await request.json()
+    updated_field = request.dict(exclude_unset=True)
     result = collection.update_one({"_id": ObjectId(wb_question_id)}, {"$set": updated_field})
     if result.modified_count == 1:
         updated_wb_question = collection.find_one({"_id": ObjectId(wb_question_id)})

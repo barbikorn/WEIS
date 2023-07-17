@@ -4,9 +4,9 @@ import os
 from fastapi import APIRouter, HTTPException, Request, Header
 from typing import List, Optional, Dict, Any
 from bson import ObjectId
-from app.models.amphurs.amphur import Amphur
+from app.models.amphurs.amphur import Amphur,AmphurUpdate
 from app.database import get_database_atlas
-from app.models.hosts.route import HostDatabaseManager
+
 
 router = APIRouter()
 
@@ -33,9 +33,6 @@ def create_amphur(
 def get_all_amphurs(
     request: Request,
 ):
-    # host = htoken
-    # collection = database_manager.get_collection(host)
-
     amphurs = []
     for amphur in collection.find():
         id = str(amphur.pop('_id'))
@@ -55,13 +52,13 @@ def get_amphur(
     else:
         raise HTTPException(status_code=404, detail="Amphur not found")
 
-@router.get("/filters/", response_model=List[Amphur])
-async def get_amphur_by_filter(
-    request: Request,
+@router.post("/filters/", response_model=List[Amphur])
+def get_amphur_by_filter(
+    request: AmphurUpdate,
     offset: int = 0,
     limit: int = 100
 ) -> List[Amphur]:
-    filter_params = await request.json()
+    filter_params = request.dict(exclude_unset=True)
     query = {}
 
     for field, value in filter_params.items():
@@ -69,18 +66,18 @@ async def get_amphur_by_filter(
 
     cursor = collection.find(query).skip(offset).limit(limit)
     amphurs = []
-    async for amphur in cursor:
+    for amphur in cursor:
         amphurs.append(Amphur(id=str(amphur["_id"]), **amphur))
 
     return amphurs
 
 
 @router.put("/{amphur_id}", response_model=Amphur)
-async def update_amphur(
-    request: Request,
+def update_amphur(
+    request: AmphurUpdate,
     amphur_id: str,
 ):
-    updated_field = await request.json()
+    updated_field = request.dict(exclude_unset=True)
     result = collection.update_one({"_id": ObjectId(amphur_id)}, {"$set": updated_field})
     if result.modified_count == 1:
         updated_amphur = collection.find_one({"_id": ObjectId(amphur_id)})

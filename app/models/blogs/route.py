@@ -7,14 +7,14 @@ from bson import ObjectId
 from app.models.blogs.blog import Blog
 from app.models.blogs.blogItem import BlogItem
 from app.database import get_database_atlas
-from app.models.hosts.route import HostDatabaseManager
+
 
 router = APIRouter()
 
 atlas_uri = "mongodb+srv://doadmin:AU97Jfe026gE415o@db-mongodb-kornxecobz-8ade0110.mongo.ondigitalocean.com/admin?tls=true&authSource=admin"
 collection_name = "blogs"
 
-# database_manager = HostDatabaseManager(atlas_uri, collection_name)
+# 
 collection = get_database_atlas("WEIS", atlas_uri)[collection_name]
 
 #  -------------- BLOG Part --------------------------
@@ -59,13 +59,13 @@ def get_blog(
     else:
         raise HTTPException(status_code=404, detail="Blog not found")
 
-@router.get("/filters/", response_model=List[Blog])
+@router.post("/filters/", response_model=List[Blog])
 async def get_blog_by_filter(
     request: Request,
     offset: int = 0,
     limit: int = 100
 ) -> List[Blog]:
-    filter_params = await request.json()
+    filter_params = request.dict(exclude_unset=True)
     query = {}
 
     for field, value in filter_params.items():
@@ -169,13 +169,13 @@ def get_blog_Item(
     else:
         raise HTTPException(status_code=404, detail="BlogItem not found")
 
-@router.get("/filters/", response_model=List[BlogItem])
+@router.post("/filters/", response_model=List[BlogItem])
 async def get_blog_Item_by_filter(
     request: Request,
     offset: int = 0,
     limit: int = 100
 ) -> List[BlogItem]:
-    filter_params = await request.json()
+    filter_params = request.dict(exclude_unset=True)
     query = {}
 
     for field, value in filter_params.items():
@@ -193,7 +193,7 @@ def update_blog(
     request: Request,
     blog_id: str,
     blog_data,
-    htoken: Optional[str] = Header(None)
+
 ):
     collection_name = "blog_items"
     collection = get_database_atlas("WEIS", atlas_uri)[collection_name]

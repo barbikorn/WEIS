@@ -4,16 +4,16 @@ import os
 from fastapi import APIRouter, HTTPException, Request, Header
 from typing import List, Optional, Dict, Any
 from bson import ObjectId
-from app.models.factorys.factory import Factory
+from app.models.factorys.factory import Factory, FactoryUpdate
 from app.database import get_database_atlas
-from app.models.hosts.route import HostDatabaseManager
+
 
 router = APIRouter()
 
 atlas_uri = "mongodb+srv://doadmin:AU97Jfe026gE415o@db-mongodb-kornxecobz-8ade0110.mongo.ondigitalocean.com/admin?tls=true&authSource=admin"
 collection_name = "factorys"
 
-database_manager = HostDatabaseManager(atlas_uri, collection_name)
+
 collection = get_database_atlas("WEIS", atlas_uri)[collection_name]
 
 @router.post("/", response_model=Factory)
@@ -54,31 +54,32 @@ def get_factory(
     else:
         raise HTTPException(status_code=404, detail="Factory not found")
 
-@router.get("/filters/", response_model=List[Factory])
-async def get_factory_by_filter(
-    request: Request,
+@router.post("/filters/", response_model=List[Factory])
+def get_amphur_by_filter(
+    request: FactoryUpdate,
     offset: int = 0,
     limit: int = 100
 ) -> List[Factory]:
-    filter_params = await request.json()
+    filter_params = request.dict(exclude_unset=True)
     query = {}
 
     for field, value in filter_params.items():
         query[field] = value
 
     cursor = collection.find(query).skip(offset).limit(limit)
-    companies = []
-    async for factory in cursor:
-        companies.append(Factory(id=str(factory["_id"]), **factory))
+    amphurs = []
+    for amphur in cursor:
+        amphurs.append(Factory(id=str(amphur["_id"]), **amphur))
 
-    return companies
+    return amphurs
 
 @router.put("/{factory_id}", response_model=Factory)
 def update_factory(
+    request: FactoryUpdate,
     factory_id: str,
-    factory_data,
 ):
-    result = collection.update_one({"_id": ObjectId(factory_id)}, {"$set": factory_data.dict()})
+    updated_field = request.dict(exclude_unset=True)
+    result = collection.update_one({"_id": ObjectId(factory_id)}, {"$set": updated_field})
     if result.modified_count == 1:
         updated_factory = collection.find_one({"_id": ObjectId(factory_id)})
         return Factory(**updated_factory)

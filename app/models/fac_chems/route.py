@@ -4,16 +4,16 @@ import os
 from fastapi import APIRouter, HTTPException, Request, Header
 from typing import List, Optional, Dict, Any
 from bson import ObjectId
-from app.models.fac_chems.fac_chem import FacChem
+from app.models.fac_chems.fac_chem import FacChem ,FacChemUpdate
 from app.database import get_database_atlas
-from app.models.hosts.route import HostDatabaseManager
+
 
 router = APIRouter()
 
 atlas_uri = "mongodb+srv://doadmin:AU97Jfe026gE415o@db-mongodb-kornxecobz-8ade0110.mongo.ondigitalocean.com/admin?tls=true&authSource=admin"
 collection_name = "fac_chems"
 
-database_manager = HostDatabaseManager(atlas_uri, collection_name)
+
 collection = get_database_atlas("WEIS", atlas_uri)[collection_name]
 
 @router.post("/", response_model=FacChem)
@@ -54,13 +54,13 @@ def get_fac_chem(
     else:
         raise HTTPException(status_code=404, detail="Fac_chem not found")
 
-@router.get("/filters/", response_model=List[FacChem])
-async def get_fac_chem_by_filter(
-    request: Request,
+@router.post("/filters/", response_model=List[FacChem])
+def get_fac_chem_by_filter(
+    request: FacChemUpdate,
     offset: int = 0,
     limit: int = 100
 ) -> List[FacChem]:
-    filter_params = await request.json()
+    filter_params = request.dict(exclude_unset=True)
     query = {}
 
     for field, value in filter_params.items():
@@ -68,22 +68,22 @@ async def get_fac_chem_by_filter(
 
     cursor = collection.find(query).skip(offset).limit(limit)
     fac_chems = []
-    async for fac_chem in cursor:
+    for fac_chem in cursor:
         fac_chems.append(FacChem(id=str(fac_chem["_id"]), **fac_chem))
 
     return fac_chems
 
 
-@router.put("/{fac_chem_id}", response_model=FacChem)
-async def update_fac_chem(
-    request: Request,
-    fac_chem_id: str,
+@router.put("/{facChem_id}", response_model=FacChem)
+def update_facChem(
+    request: FacChemUpdate,
+    facChem_id: str,
 ):
-    updated_field = await request.json()
-    result = collection.update_one({"_id": ObjectId(fac_chem_id)}, {"$set": updated_field})
+    updated_field = request.dict(exclude_unset=True)
+    result = collection.update_one({"_id": ObjectId(facChem_id)}, {"$set": updated_field})
     if result.modified_count == 1:
-        updated_fac_chem = collection.find_one({"_id": ObjectId(fac_chem_id)})
-        return FacChem(**updated_fac_chem)
+        updated_facChem = collection.find_one({"_id": ObjectId(facChem_id)})
+        return FacChem(**updated_facChem)
     else:
         raise HTTPException(status_code=404, detail="FacChem not found")
 

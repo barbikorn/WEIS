@@ -6,23 +6,22 @@ from typing import List, Optional, Dict
 from bson import ObjectId
 from app.models.products.product import Product
 from app.database import get_database_atlas
-from app.models.hosts.route import HostDatabaseManager
+
 
 router = APIRouter()
 
 atlas_uri = "mongodb+srv://doadmin:AU97Jfe026gE415o@db-mongodb-kornxecobz-8ade0110.mongo.ondigitalocean.com/admin?tls=true&authSource=admin"
 collection_name = "products"
 
-database_manager = HostDatabaseManager(atlas_uri, collection_name)
+
 
 @router.post("/", response_model=Product)
 def create_product(
     request: Request,
     product_data: Product,
-    htoken: Optional[str] = Header(None)
+
 ):
-    host = htoken
-    collection = database_manager.get_collection(host)
+
 
     product_data_dict = product_data.dict()
     result = collection.insert_one(product_data_dict)
@@ -36,10 +35,9 @@ def create_product(
 @router.get("/", response_model=List[Product])
 def get_all_products(
     request: Request,
-    htoken: Optional[str] = Header(None)
+
 ):
-    host = htoken
-    collection = database_manager.get_collection(host)
+
 
     products = []
     for product in collection.find():
@@ -50,10 +48,9 @@ def get_all_products(
 def get_product(
     request: Request,
     product_id: str,
-    htoken: Optional[str] = Header(None)
+
 ):
-    host = htoken
-    collection = database_manager.get_collection(host)
+
 
     product = collection.find_one({"_id": product_id})
     if product:
@@ -61,17 +58,16 @@ def get_product(
     else:
         raise HTTPException(status_code=404, detail="Product not found")
 
-@router.get("/filters/", response_model=List[Product])
+@router.post("/filters/", response_model=List[Product])
 async def get_products_by_filter(
     request: Request,
     name: Optional[str] = None,
     email: Optional[str] = None,
     offset: int = 0,
     limit: int = 100,
-    htoken: Optional[str] = Header(None)
+
 ):
-    host = htoken
-    collection = database_manager.get_collection(host)
+
 
     query = {}
     if name:
@@ -88,10 +84,9 @@ async def get_products_by_filter(
 def get_products_by_filter(
     request: Request,
     filter: Dict,
-    htoken: Optional[str] = Header(None)
+
 ):
-    host = htoken
-    collection = database_manager.get_collection(host)
+
 
     products = []
     for product in collection.find(filter):
@@ -103,10 +98,9 @@ def update_product(
     request: Request,
     product_id: str,
     product_data,
-    htoken: Optional[str] = Header(None)
+
 ):
-    host = htoken
-    collection = database_manager.get_collection(host)
+
 
     result = collection.update_one({"_id": product_id}, {"$set": product_data.dict()})
     if result.modified_count == 1:
@@ -119,10 +113,9 @@ def update_product(
 def delete_product(
     request: Request,
     product_id: str,
-    htoken: Optional[str] = Header(None)
+
 ):
-    host = htoken
-    collection = database_manager.get_collection(host)
+
 
     result = collection.delete_one({"_id": product_id})
     if result.deleted_count == 1:

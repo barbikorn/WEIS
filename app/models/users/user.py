@@ -8,5 +8,14 @@ class User(BaseModel):
     password: str
     role: str
     age: int
-    address: Optional[str] = None
-    
+    address: Optional[str] 
+
+class UserUpdate(BaseModel):
+    id : Optional[str]
+    name: Optional[str]
+    email: Optional[str]
+    password: Optional[str]
+    role: Optional[str]
+    age: Optional[int]
+    address: Optional[str] 
+

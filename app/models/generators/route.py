@@ -6,14 +6,14 @@ from typing import List, Optional, Dict, Any
 from bson import ObjectId
 from app.models.generators.generator import Generator
 from app.database import get_database_atlas
-from app.models.hosts.route import HostDatabaseManager
+
 
 router = APIRouter()
 
 atlas_uri = "mongodb+srv://doadmin:AU97Jfe026gE415o@db-mongodb-kornxecobz-8ade0110.mongo.ondigitalocean.com/admin?tls=true&authSource=admin"
 collection_name = "generators"
 
-# database_manager = HostDatabaseManager(atlas_uri, collection_name)
+# 
 collection = get_database_atlas("WEIS", atlas_uri)[collection_name]
 
 @router.post("/", response_model=Generator)
@@ -62,14 +62,14 @@ def get_generator(
     else:
         raise HTTPException(status_code=404, detail="Generator not found")
 
-@router.get("/filters/", response_model=List[Generator])
+@router.post("/filters/", response_model=List[Generator])
 async def get_generators_by_filter(
     request: Request,
     name: Optional[str] = None,
     email: Optional[str] = None,
     offset: int = 0,
     limit: int = 100,
-    htoken: Optional[str] = Header(None)
+
 ):
     # host = htoken
     # collection = database_manager.get_collection(host)
@@ -89,7 +89,7 @@ async def get_generators_by_filter(
 def get_generators_by_filter(
     request: Request,
     filter: Dict,
-    htoken: Optional[str] = Header(None)
+
 ):
     # host = htoken
     # collection = database_manager.get_collection(host)
@@ -104,7 +104,7 @@ def update_generator(
     request: Request,
     generator_id: str,
     generator_data,
-    htoken: Optional[str] = Header(None)
+
 ):
     # host = htoken
     # collection = database_manager.get_collection(host)

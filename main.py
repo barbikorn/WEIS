@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from app.models.users.route import router as users_router
-from app.models.hosts.route import router as hosts_router
+
 from app.models.products.route import router as products_router
 from app.models.provinces.route import router as provinces_router
 from app.models.amphurs.route import router as amphurs_router
