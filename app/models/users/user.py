@@ -1,8 +1,8 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Union
+
 
 class User(BaseModel):
-    id : Optional[str]
     name: str
     email: str
     password: str
@@ -10,12 +10,29 @@ class User(BaseModel):
     age: int
     address: Optional[str] 
 
-class UserUpdate(BaseModel):
-    id : Optional[str]
+class UserCreate(BaseModel):
     name: Optional[str]
     email: Optional[str]
     password: Optional[str]
     role: Optional[str]
     age: Optional[int]
     address: Optional[str] 
+
+
+class UserUpdate(BaseModel):
+    name: Optional[str]
+    email: Optional[str]
+    password: Optional[str]
+    role: Optional[str]
+    age: Optional[int]
+    address: Optional[str] 
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    email: Union[str, None] = None
 

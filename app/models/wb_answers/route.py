@@ -55,7 +55,7 @@ def get_wb_answer(
         raise HTTPException(status_code=404, detail="Wb_answer not found")
 
 @router.post("/filters/", response_model=List[WbAnswer])
-def get_amphur_by_filter(
+def get_wb_answer_by_filter(
     request: WbAnswerUpdate,
     offset: int = 0,
     limit: int = 100
@@ -67,11 +67,11 @@ def get_amphur_by_filter(
         query[field] = value
 
     cursor = collection.find(query).skip(offset).limit(limit)
-    amphurs = []
-    for amphur in cursor:
-        amphurs.append(WbAnswer(id=str(amphur["_id"]), **amphur))
+    wb_answers = []
+    for wb_answer in cursor:
+        wb_answers.append(WbAnswer(id=str(wb_answer["_id"]), **wb_answer))
 
-    return amphurs
+    return wb_answers
 
 @router.put("/{wb_answer_id}", response_model=WbAnswer)
 async def update_wb_answer(

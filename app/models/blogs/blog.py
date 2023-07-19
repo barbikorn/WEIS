@@ -10,7 +10,7 @@ class Blog(BaseModel):
     Geo_id: int
     Province_id :int
 
-class Blog(BaseModel):
+class BlogUpdate(BaseModel):
     _id: ObjectId = Field(..., alias="_id")
     Amphur_code: str
     Amphur_name: str

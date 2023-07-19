@@ -54,7 +54,7 @@ def get_waste_rule(
         raise HTTPException(status_code=404, detail="WasteRule not found")
 
 @router.post("/filters/", response_model=List[WasteRule])
-def get_amphur_by_filter(
+def get_waste_rule_by_filter(
     request: WasteRuleUpdate,
     offset: int = 0,
     limit: int = 100
@@ -66,11 +66,11 @@ def get_amphur_by_filter(
         query[field] = value
 
     cursor = collection.find(query).skip(offset).limit(limit)
-    amphurs = []
-    for amphur in cursor:
-        amphurs.append(WasteRule(id=str(amphur["_id"]), **amphur))
+    waste_rules = []
+    for waste_rule in cursor:
+        waste_rules.append(WasteRule(id=str(waste_rule["_id"]), **waste_rule))
 
-    return amphurs
+    return waste_rules
 
 
 @router.put("/{waste_rule_id}", response_model=WasteRule)

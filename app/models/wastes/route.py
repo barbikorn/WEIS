@@ -65,7 +65,7 @@ def get_waste(
 
 
 @router.post("/filters/", response_model=List[Waste])
-def get_amphur_by_filter(
+def get_waste_by_filter(
     request: WasteUpdate,
     offset: int = 0,
     limit: int = 100
@@ -79,11 +79,11 @@ def get_amphur_by_filter(
     collection_name = "wastes"
     collection = get_database_atlas("WEIS", atlas_uri)[collection_name]
     cursor = collection.find(query).skip(offset).limit(limit)
-    amphurs = []
-    for amphur in cursor:
-        amphurs.append(Waste(id=str(amphur["_id"]), **amphur))
+    wastes = []
+    for waste in cursor:
+        wastes.append(Waste(id=str(waste["_id"]), **waste))
 
-    return amphurs
+    return wastes
 
 
 @router.put("/{waste_id}", response_model=Waste)

@@ -1,30 +1,26 @@
 
-from datetime import datetime, timedelta
-from fastapi import APIRouter, HTTPException, Request, Depends, status
-from typing import List, Optional, Dict ,Any, Union
+import json
+import os
+from fastapi import APIRouter, HTTPException, Request, Header
+from typing import List, Optional, Dict ,Any
 from bson import ObjectId
-from app.models.users.user import User,UserUpdate, Token, TokenData
+from app.models.users.user import User,UserUpdate
 from app.database import get_database_atlas
-from passlib.context import CryptContext
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from jose import JWTError, jwt
-from typing_extensions import Annotated
+
 
 router = APIRouter()
 
 atlas_uri = "mongodb+srv://doadmin:AU97Jfe026gE415o@db-mongodb-kornxecobz-8ade0110.mongo.ondigitalocean.com/admin?tls=true&authSource=admin"
 collection_name = "users"
 collection = get_database_atlas("WEIS", atlas_uri)[collection_name]
-# to get a string like this run:
-# openssl rand -hex 32
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 @router.post("/", response_model=User)
 def create_user(
     request: Request,
     user_data: User,
+
 ):
     user_data_dict = user_data.dict()
     result = collection.insert_one(user_data_dict)
@@ -37,7 +33,8 @@ def create_user(
 
 @router.get("/", response_model=List[Dict[str, Any]])
 def get_all_users(
-    authtoken: str = Depends(oauth2_scheme)
+    request: Request,
+
 ):
     users = []
     for user in collection.find():
@@ -50,7 +47,7 @@ def get_all_users(
 def get_user(
     request: Request,
     user_id: str,
-    authtoken: str = Depends(oauth2_scheme)
+
 ):
     user = collection.find_one({"_id": ObjectId(user_id)})
     if user:
@@ -59,13 +56,13 @@ def get_user(
         raise HTTPException(status_code=404, detail="User not found")
 
 
-@router.get("/filters/", response_model=List[User])
+@router.post("/filters/", response_model=List[User])
 async def get_user_by_filter(
     request: Request,
     offset: int = 0,
     limit: int = 100
 ) -> List[User]:
-    filter_params = await request.json()
+    filter_params = request.dict(exclude_unset=True)
     query = {}
 
     for field, value in filter_params.items():
@@ -96,6 +93,7 @@ def update_user(
 def delete_user(
     request: Request,
     user_id: str,
+
 ):
     result = collection.delete_one({"_id": user_id})
     if result.deleted_count == 1:

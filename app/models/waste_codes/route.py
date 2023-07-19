@@ -54,7 +54,7 @@ def get_waste_code(
         raise HTTPException(status_code=404, detail="WasteCode not found")
 
 @router.post("/filters/", response_model=List[WasteCode])
-def get_amphur_by_filter(
+def get_waste_code_by_filter(
     request: WasteCodeUpdate,
     offset: int = 0,
     limit: int = 100
@@ -66,11 +66,11 @@ def get_amphur_by_filter(
         query[field] = value
 
     cursor = collection.find(query).skip(offset).limit(limit)
-    amphurs = []
-    for amphur in cursor:
-        amphurs.append(WasteCode(id=str(amphur["_id"]), **amphur))
+    waste_codes = []
+    for waste_code in cursor:
+        waste_codes.append(WasteCode(id=str(waste_code["_id"]), **waste_code))
 
-    return amphurs
+    return waste_codes
 
 
 @router.put("/{waste_code_id}", response_model=WasteCode)

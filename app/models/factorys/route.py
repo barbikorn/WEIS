@@ -55,7 +55,7 @@ def get_factory(
         raise HTTPException(status_code=404, detail="Factory not found")
 
 @router.post("/filters/", response_model=List[Factory])
-def get_amphur_by_filter(
+def get_factory_by_filter(
     request: FactoryUpdate,
     offset: int = 0,
     limit: int = 100
@@ -67,11 +67,11 @@ def get_amphur_by_filter(
         query[field] = value
 
     cursor = collection.find(query).skip(offset).limit(limit)
-    amphurs = []
-    for amphur in cursor:
-        amphurs.append(Factory(id=str(amphur["_id"]), **amphur))
+    factorys = []
+    for factory in cursor:
+        factorys.append(Factory(id=str(factory["_id"]), **factory))
 
-    return amphurs
+    return factorys
 
 @router.put("/{factory_id}", response_model=Factory)
 def update_factory(

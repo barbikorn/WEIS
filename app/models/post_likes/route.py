@@ -55,7 +55,7 @@ def get_post_like(
         raise HTTPException(status_code=404, detail="Post_like not found")
 
 @router.post("/filters/", response_model=List[PostLike])
-def get_amphur_by_filter(
+def get_post_like_by_filter(
     request: PostLikeUpdate,
     offset: int = 0,
     limit: int = 100
@@ -67,11 +67,11 @@ def get_amphur_by_filter(
         query[field] = value
 
     cursor = collection.find(query).skip(offset).limit(limit)
-    amphurs = []
-    for amphur in cursor:
-        amphurs.append(PostLike(id=str(amphur["_id"]), **amphur))
+    post_likes = []
+    for post_like in cursor:
+        post_likes.append(PostLike(id=str(post_like["_id"]), **post_like))
 
-    return amphurs
+    return post_likes
 
 @router.put("/{post_like_id}", response_model=PostLike)
 def update_post_like(
