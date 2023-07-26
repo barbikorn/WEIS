@@ -1,29 +1,30 @@
 
 import json
 import os
-from fastapi import APIRouter, HTTPException, Request, Header
+from fastapi import APIRouter, HTTPException, Request, Depends
 from typing import List, Optional, Dict, Any
 from bson import ObjectId
 from app.models.wastes.waste import Waste,WasteUpdate
 from app.models.wastes.wasteItem import WasteItem
 from app.database import get_database_atlas
+from fastapi.security import OAuth2PasswordBearer
 
 
 router = APIRouter()
 
 atlas_uri = "mongodb+srv://doadmin:AU97Jfe026gE415o@db-mongodb-kornxecobz-8ade0110.mongo.ondigitalocean.com/admin?tls=true&authSource=admin"
+collection_name = "wastes"
+collection = get_database_atlas("WEIS", atlas_uri)[collection_name]
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-
-#  -------------- BLOG Part --------------------------
+#  -------------- WASTE Part --------------------------
 
 @router.post("/", response_model=Waste)
 def create_waste(
     request: Request,
     waste_data: Waste,
+    authtoken: str = Depends(oauth2_scheme)
 ):
-    collection_name = "wastes"
-    collection = get_database_atlas("WEIS", atlas_uri)[collection_name]
-    
     waste_data_dict = waste_data.dict()
     result = collection.insert_one(waste_data_dict)
 
@@ -36,12 +37,10 @@ def create_waste(
 @router.get("/", response_model=List[Dict[str, Any]])
 def get_all_wastes(
     request: Request,
+    authtoken: str = Depends(oauth2_scheme)
 ):
     # host = htoken
     # collection = database_manager.get_collection(host)
-    collection_name = "wastes"
-    collection = get_database_atlas("WEIS", atlas_uri)[collection_name]
-
     wastes = []
     for waste in collection.find():
         id = str(waste.pop('_id'))
@@ -54,6 +53,7 @@ def get_all_wastes(
 def get_waste(
     request: Request,
     waste_id: str,
+    authtoken: str = Depends(oauth2_scheme)
 ):
     collection_name = "wastes"
     collection = get_database_atlas("WEIS", atlas_uri)[collection_name]
@@ -68,7 +68,8 @@ def get_waste(
 def get_waste_by_filter(
     request: WasteUpdate,
     offset: int = 0,
-    limit: int = 100
+    limit: int = 100,
+    authtoken: str = Depends(oauth2_scheme)
 ) -> List[Waste]:
     filter_params = request.dict(exclude_unset=True)
     query = {}
@@ -90,6 +91,7 @@ def get_waste_by_filter(
 def update_waste(
     request: WasteUpdate,
     waste_id: str,
+    authtoken: str = Depends(oauth2_scheme)
 ):
     collection_name = "wastes"
     collection = get_database_atlas("WEIS", atlas_uri)[collection_name]
@@ -105,6 +107,7 @@ def update_waste(
 def delete_waste(
     request: Request,
     waste_id: str,
+    authtoken: str = Depends(oauth2_scheme)
 ):
     collection_name = "wastes"
     collection = get_database_atlas("WEIS", atlas_uri)[collection_name]

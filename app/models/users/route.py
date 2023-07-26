@@ -25,6 +25,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 def create_user(
     request: Request,
     user_data: User,
+    authtoken: str = Depends(oauth2_scheme)
 ):
     user_data_dict = user_data.dict()
     result = collection.insert_one(user_data_dict)
