@@ -11,11 +11,11 @@ class User(BaseModel):
     address: Optional[str] 
 
 class UserCreate(BaseModel):
-    name: Optional[str]
-    email: Optional[str]
-    password: Optional[str]
-    role: Optional[str]
-    age: Optional[int]
+    name: str
+    email: str
+    password: str
+    role: Optional[str] = "users"
+    age: Optional[int] = 0
     address: Optional[str] 
 
 
